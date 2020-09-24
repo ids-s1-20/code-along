@@ -86,7 +86,7 @@ chat %>%
 
 Finally, let's take a look at sentiment score throughout the duration of the session. We'll use a different lexicon that gives sentiment scores instead of positive / negative categorizations, and tally scores per minute. We're seeing a downward shift throughout the session, which is a little worrying. I hope I didn't confuse people too much! But I should also note that around the 40 minute mark we started talking about people dying during Himalayan expeditions. So, it's not surprising that the sentiment score started dipping.  
 
-```{r sentiment-score, message = FALSE}
+```{r sentiment-score, message = FALSE, dpi = 300}
 chat %>%
   unnest_tokens(word, message) %>%
   anti_join(stop_words) %>%
