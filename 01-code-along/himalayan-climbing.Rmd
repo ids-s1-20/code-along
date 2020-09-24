@@ -1,0 +1,62 @@
+---
+title: "Himalayan climbing expeditions"
+author: "Mine Çetinkaya-Rundel"
+date: "24 September 2020"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r load-packages, message = FALSE}
+library(tidyverse)
+library(skimr)
+```
+
+The data come from [TidyTuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-09-22/readme.md). TidyTuesday is a weekly social data project for the R community. Read more about TidyTuesday [here](https://github.com/rfordatascience/tidytuesday) and see people's contributions on Twitter under the [#tidytuesday hashtag](https://twitter.com/search?q=tidytuesday&src=typed_query). 
+
+```{r load-data, message = FALSE}
+members     <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-22/members.csv")
+expeditions <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-22/expeditions.csv")
+peaks       <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-22/peaks.csv")
+```
+
+## Data overview
+
+### Members
+
+```{r}
+skim(members)
+```
+
+### Peaks
+
+```{r}
+skim(peaks)
+```
+
+
+## Popular peaks
+
+```{r}
+members %>%
+  count(peak_name) %>%
+  arrange(desc(n)) %>%
+  mutate(proportion = n / sum(n))
+```
+
+
+## Hired and died
+
+```{r}
+members %>%
+  count(hired, died) %>%
+  group_by(hired) %>%
+  mutate(proportion = n / sum(n))
+```
+
+```{r}
+ggplot(members, aes(x = hired, fill = died)) +
+  geom_bar(position = "fill")
+```
+
+Go to RStudio Cloud and try it yourself in the project titled `Code Along 01 - Himalayan Climbing Expeditions`.
