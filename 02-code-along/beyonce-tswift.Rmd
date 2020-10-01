@@ -1,0 +1,114 @@
+---
+title: "Beyoncé and Taylor Swift Lyrics"
+date: "`r Sys.Date()`"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r load-packages, message = FALSE}
+library(tidyverse)
+library(skimr)
+library(tidytext)  # for working with text data
+library(lubridate) # for working with dates
+library(scales)    # for scales on plots 
+library(patchwork) # for arranging plots
+```
+
+The data come from [TidyTuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-09-29/readme.md). TidyTuesday is a weekly social data project for the R community. Read more about TidyTuesday [here](https://github.com/rfordatascience/tidytuesday) and see people's contributions on Twitter under the [#tidytuesday hashtag](https://twitter.com/search?q=tidytuesday&src=typed_query). 
+
+```{r load-data, message = FALSE}
+beyonce_lyrics <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/beyonce_lyrics.csv')
+tswift_lyrics  <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/taylor_swift_lyrics.csv')
+sales          <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/sales.csv')
+charts         <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/charts.csv')
+```
+
+## Data overview
+
+```{r skim-sales}
+skim(sales)
+```
+
+```{r skim-charts}
+skim(charts)
+```
+
+## Sales
+
+#### Sales by artist and country over time
+
+```{r}
+sales %>%
+  filter(country == "UK" | country == "US") %>%
+  ggplot(aes(y = sales, x = year(mdy(released)), color = artist)) +
+  geom_point() +
+  facet_wrap(~country, nrow = 2) +
+  theme_minimal() +
+  scale_y_continuous(labels = label_dollar()) +
+  labs(
+    x = "Year released",
+    y = "Sales (in USD)",
+    color = "Artist"
+  )
+```
+
+
+
+## Charts
+
+### Average chart position by artist and country
+
+```{r warning = FALSE, fig.asp = 0.5, out.width = "90%"}
+charts %>%
+  group_by(artist, chart) %>%
+  summarise(avg_chart_pos = mean(as.numeric(chart_position), na.rm = TRUE)) %>%
+  ggplot(aes(x = chart, y = avg_chart_pos)) +
+  geom_col() +
+  facet_wrap(~artist)
+```
+
+### Chart position by artist and country
+
+```{r warning = FALSE, fig.asp = 0.5, out.width = "90%"}
+ggplot(charts, aes(y = chart, x = as.numeric(chart_position), color = artist)) +
+  geom_boxplot()
+```
+
+What's that one Taylor Swift album that did so badly in the UK?
+
+```{r warning = FALSE}
+charts %>%
+  filter(as.numeric(chart_position) > 80) %>%
+  select(artist, title)
+```
+
+
+## Text analysis
+
+### Common words in Beyonce and Taylor Swift lyrics
+
+```{r warning = FALSE, fig.asp = 0.5, out.width = "90%"}
+p1 <- beyonce_lyrics %>%
+  unnest_tokens(word, line) %>%
+  anti_join(get_stopwords()) %>%
+  count(word, sort = TRUE) %>%
+  slice_max(n, n = 10) %>%
+  ggplot(aes(y = fct_reorder(word, n), x = n)) +
+  geom_col() +
+  labs(title = "Beyonce")
+
+p2 <- tswift_lyrics %>%
+  unnest_tokens(word, Lyrics) %>%
+  anti_join(get_stopwords()) %>%
+  count(word, sort = TRUE) %>%
+  slice_max(n, n = 10) %>%
+  ggplot(aes(y = fct_reorder(word, n), x = n)) +
+  geom_col() +
+  labs(title = "Taylor Swift")
+
+p1 + p2
+```
+
+
+
