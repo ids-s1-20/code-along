@@ -1,0 +1,120 @@
+---
+title: "College tuition, diversity, and pay"
+date: "`r Sys.Date()`"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r load-packages, message = FALSE}
+library(tidyverse)
+library(skimr)
+library(knitr)    # for the kable() function
+```
+
+The data come from [TidyTuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-09-29/readme.md). TidyTuesday is a weekly social data project for the R community. Read more about TidyTuesday [here](https://github.com/rfordatascience/tidytuesday) and see people's contributions on Twitter under the [#tidytuesday hashtag](https://twitter.com/search?q=tidytuesday&src=typed_query). 
+
+```{r load-data, message = FALSE}
+tuition_cost <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/tuition_cost.csv')
+tuition_income <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/tuition_income.csv') 
+salary_potential <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/salary_potential.csv')
+historical_tuition <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/historical_tuition.csv')
+diversity_school <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-10/diversity_school.csv')
+```
+
+## Data overview
+
+```{r skim}
+skim(tuition_cost)
+```
+
+
+
+## Summaries
+
+```{r avg-total}
+tuition_cost %>%
+  summarise(
+    mean_in_state_total = mean(in_state_total),
+    mean_out_of_state_total = mean(out_of_state_total)
+  )
+```
+
+```{r most-expensive-schools}
+tuition_cost %>%
+  arrange(desc(out_of_state_total)) %>%
+  select(name, out_of_state_total, room_and_board)
+```
+
+```{r total-by-state}
+tuition_cost %>%
+  group_by(state) %>%
+  summarise(mean_out_of_state_total = mean(out_of_state_total)) %>%
+  arrange(desc(mean_out_of_state_total))
+```
+
+```{r rhode-island-schools}
+tuition_cost %>%
+  filter(state == "Rhode Island") %>%
+  select(name, type, out_of_state_total)
+```
+
+```{r}
+state_freq_table <- tuition_cost %>%
+  count(state, sort = TRUE)
+```
+
+```{r}
+tuition_cost %>%
+  filter(state == "Montana")
+
+tuition_cost %>%
+  arrange(desc(name))
+```
+
+```{r}
+tuition_cost_fl <- tuition_cost %>%
+  filter(state == "Florida")
+
+tuition_cost_fl %>%
+  summarise(mean_out_of_state_total = mean(out_of_state_total))
+```
+
+```{r}
+tuition_cost %>%
+  group_by(state) %>%
+  summarise(freq = n())
+```
+
+## `group_by`
+
+```{r type-room-board}
+tuition_cost %>%
+  filter(type != "Other") %>%
+  group_by(type) %>%
+  summarise(
+    mean_room_and_board = mean(room_and_board, na.rm = TRUE),
+    sd_room_and_board = sd(room_and_board, na.rm = TRUE),
+    n = n()
+    ) %>%
+  kable()
+```
+
+```{r type-room-board-state}
+tuition_cost %>%
+  filter(type != "Other") %>%
+  group_by(type, state) %>%
+  summarise(
+    mean_room_and_board = mean(room_and_board, na.rm = TRUE),
+    sd_room_and_board = sd(room_and_board, na.rm = TRUE),
+    n = n()
+    )
+```
+
+
+
+
+
+
+
+
