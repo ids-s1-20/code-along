@@ -1,0 +1,50 @@
+---
+title: "A sample R Markdown document"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+## Show / hide code, messages, warnings
+
+```{r load-package, message = FALSE}
+library(tidyverse)
+```
+
+```{r hwy-hist}
+ggplot(mpg, aes(x = hwy)) +
+  geom_histogram(binwidth = 3)
+```
+
+## Sizing plots
+
+You can also embed plots, for example:
+
+```{r hwy-hist-facet, fig.height = 13}
+library(tools)
+
+mpg %>%
+  mutate(manufacturer = toTitleCase(manufacturer)) %>%
+  ggplot(aes(x = hwy)) +
+  geom_histogram(binwidth = 3) +
+  facet_wrap(~manufacturer, ncol = 1)
+```
+
+## Asking good questions
+
+```{r}
+mpg %>%
+  filter(cyl > 4) %>%
+  ggplot(mpg, aes(x = hwy)) +
+  geom_histogram(binwidth = 2.5)
+```
+
+
+## anti_join
+
+```{r}
+band_instruments %>%
+  anti_join(band_members)
+```
+
