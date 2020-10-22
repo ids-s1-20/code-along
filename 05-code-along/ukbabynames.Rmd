@@ -1,0 +1,246 @@
+---
+title: "UK Baby Names"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r chunk-options, include = FALSE}
+# what is this?
+knitr::opts_chunk$set(fig.width = 6, fig.asp = 0.618, dpi = 300, out.width = "80%")
+```
+
+```{r load-packages, message = FALSE}
+library(tidyverse)
+library(ukbabynames)
+```
+
+## Data
+
+We'll work with the [**ukbabynames**](https://github.com/mine-cetinkaya-rundel/ukbabynames) package, which has two data sets:
+
+- `ukbabynames`: Full baby name 1996-2017 for the United Kingdom from the Office of National Statistics
+- `rankings`: A longitudinal dataset containing the top-100 baby girl and top-100 baby boy names over the period 1904 to 1994.
+
+Let's save these data as tibble to make them easier to work with.
+
+```{r make-tibbles}
+ukbabynames <- as_tibble(ukbabynames)
+rankings <- as_tibble(rankings)
+```
+
+Using this dataset, we can, for example, take a look at how popular a particular name has been over the years.
+
+## Most popular first names in IDS
+
+The most popular first names in IDS are as follows:
+
+```
+first_name     n
+Alex           4
+James          3
+Sophie         3
+Tom            3
+```
+
+Let's see how these names fared over time in the UK.
+
+```{r ids-names-rank}
+popular_IDS_names <- c("Alex", "James", "Sophie", "Tom")
+
+ukbabynames %>%
+  filter(name %in% popular_IDS_names) %>%
+  ggplot(aes(x = year, y = rank, color = name)) +
+  geom_line() +
+  facet_wrap(~sex)
+```
+
+What does a higher rank mean? More or less popular? How can we represent this better on the plot?
+
+```{r rank-rep}
+ukbabynames %>%
+  filter(name %in% popular_IDS_names) %>%
+  ggplot(aes(x = year, y = rank, color = name)) +
+  geom_line() +
+  facet_wrap(~sex) +
+  scale_y_reverse()
+```
+
+Why does the y-axis go up until 6000? How can we fix this?
+
+```{r fix-y-axis}
+ukbabynames %>%
+  filter(name %in% popular_IDS_names) %>%
+  arrange(desc(rank))
+
+ukbabynames %>%
+  filter(name %in% popular_IDS_names) %>%
+  filter(!(name == "James" & sex == "F")) %>% # take out single James in females
+  ggplot(aes(x = year, y = rank, color = name)) +
+  geom_line() +
+  facet_wrap(~sex) +
+  scale_y_reverse()
+```
+
+## Coding style
+
+As we analyse the data further, we'll give pointers on coding style. 
+
+So first, a mini-lesson on coding style!
+
+>"Good coding style is like correct punctuation: you can manage without it, butitsuremakesthingseasiertoread."
+>
+>Hadley Wickham
+
+We'll use the [Tidyverse style guide](http://style.tidyverse.org/). There's more to it than what we'll cover today, but we'll mention more as we introduce more functionality, and do a recap later in the semester.
+
+### File names and code chunk labels
+
+- Do not use spaces in file names, use `-` or `_` to separate words
+- Use all lowercase letters
+
+```{r file-names, eval = FALSE}
+# Good
+uk-baby-names.csv
+
+# Bad
+UK Baby Names.csv
+```
+
+## Object names
+
+- Use `_` to separate words in object names
+- Use informative but short object names
+- Do not reuse object names within an analysis
+
+```{r ukbabynames-2017}
+# Good
+ukbabynames_2017 <- ukbabynames %>% 
+  filter(year == 2017)
+```
+
+```{r ukbabynames-2017-bad-names, eval = FALSE}
+# Bad
+ukbabynames.2017
+ukbabynames2
+ukbabynames_subset
+ukbabynames_subsetted_for_2017
+```
+
+
+## Spacing
+
+- Put a space before and after all infix operators (`=`, `+`, `-`, `<-`, etc.), and when naming arguments in function calls. 
+- Always put a space after a comma, and never before (just like in regular English).
+
+```{r alex}
+# Good
+alex <- ukbabynames %>% 
+  group_by(year, sex) %>%
+  mutate(prop = n / sum(n)) %>%
+  filter(name == "Alex")
+```
+
+```{r alex-bad-specing, eval = FALSE}
+# Bad
+alex<-ukbabynames%>% 
+  group_by(year,sex)%>%
+  mutate(prop=n/sum( n ))%>%
+  filter(name=="Alex")
+```
+
+## ggplot
+
+- Always end a line with `+`
+- Always indent the next line
+
+```{r alex-plot}
+# Good
+ggplot(alex, aes(x = year, y = prop, color = sex, group = sex)) +
+  geom_line() +
+  labs(
+    x = "Year",
+    y = "Proportion of people named Alex",
+    color = "Sex",
+    title = "Alex over the years in the UK"
+  )
+```
+
+```{alex-plot-bad-formatting, eval = FALSE}
+# Bad
+ggplot(alex,aes(x=year,y = prop,color=sex,group=sex))+geom_line()+
+  labs(x = "Year",y = "Proportion of people named Alex",color = "Sex",title = "Alex over the years in the UK")
+```
+
+## Long lines
+
+- Limit your code to 80 characters per line. This fits comfortably on a printed page with a reasonably sized font.
+
+- Take advantage of RStudio editor's auto formatting for indentation at line breaks.
+
+```{alex-plot-bad-formatting-long-lines, eval = FALSE}
+# Bad
+ggplot(alex,aes(x=year,y = prop,color=sex,group=sex))+geom_line()+labs(x = "Year",y = "Proportion of people named Alex",color = "Sex",title = "Alex over the years in the UK")
+```
+  
+## Assignment
+  
+Use `<-` not `=`
+
+```{r jude}
+# Good
+jude <- ukbabynames %>% 
+  group_by(year, sex) %>%
+  mutate(prop = n / sum(n)) %>%
+  filter(name == "Jude")
+```
+
+```{r jude-bad-assignment, eval = FALSE}
+# Bad
+taylor = ukbabynames %>% 
+  group_by(year, sex) %>%
+  mutate(prop = n / sum(n)) %>%
+  filter(name == "Taylor")
+```
+  
+## Quotes
+  
+Use `"`, not `'`, for quoting text. The only exception is when the text already contains double quotes and no single quotes.
+
+```{r jude-plot}
+ggplot(jude, aes(x = year, y = prop, color = sex, group = sex)) +
+  geom_line() +
+  labs(
+    x = "Year",
+    y = "Proportion of people named Taylor",
+    color = "Sex",
+    title = 'Hey Jude"'
+  )
+```
+
+## When was the last person called Gary born
+
+In this dataset, what is the birth year of the youngest person named Gary?
+
+```{r young-gary}
+ukbabynames %>%
+  filter(name == "Gary") %>%
+  arrange(desc(year))
+```
+
+## Few more names
+
+
+```{r}
+ukbabynames %>% 
+  filter(name == "Gleb") %>%
+  ggplot(aes(x = year, y = rank, color = sex, group = sex)) +
+  geom_line() +
+  labs(
+    x = "Year",
+    y = "Rank of Gleb",
+    color = "Sex",
+    title = "For Gleb"
+  ) +
+  scale_y_reverse()
+```
