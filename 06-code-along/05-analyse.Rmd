@@ -1,0 +1,93 @@
+---
+title: "Analysis of First Minister's COVID-19 Speeches"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(tidytext)
+library(lubridate)
+
+scotblue <- "#0065BF"
+knitr::opts_chunk$set(fig.width = 6, fig.asp = 0.618, out.width = "80%", dpi = 300)
+
+covid_speeches <- read_rds("data/covid_speeches.rds")
+```
+
+## Days of the week
+
+```{r day-of-week-set}
+covid_speeches <- covid_speeches %>%
+  mutate(wday = wday(date, label = TRUE)) 
+```
+
+```{r day-of-week-plot}
+ggplot(covid_speeches, aes(x = wday)) +
+  geom_bar(fill = scotblue)
+```
+
+## Length of speech
+
+```{r length-of-speech-calculate}
+covid_speeches <- covid_speeches %>%
+  rowwise() %>%
+  mutate(
+    n_paragraphs = unlist(text) %>% length(),
+    n_words      = unlist(text) %>% str_count("\\w+") %>% sum()
+  ) %>%
+  ungroup()
+```
+
+```{r length-of-speech-density}
+ggplot(covid_speeches, aes(x = n_words)) +
+  geom_density(color = scotblue, fill = scotblue, alpha = 0.5) +
+  labs(
+    title = "Distribution of number of words",
+    subtitle = "of First Minister's COVID-19 daily briefings",
+    x = "Number of words",
+    y = "Density"
+  )
+```
+
+```{r length-of-speech-over-time, message = FALSE}
+ggplot(covid_speeches, aes(x = date, y = n_words)) +
+  geom_point(color = scotblue, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "darkgray") +
+  labs(
+    title = "Length of First Minister's COVID-19 daily briefings",
+    subtitle = "Measured in number of words",
+    x = NULL, y = "Number of words", color = NULL, shape = NULL
+  )
+```
+
+## Social vs. physical distancing
+
+```{r soc-phys-calculate}
+covid_speeches <- covid_speeches %>%
+  rowwise() %>%
+  mutate(
+    social = unlist(text) %>% str_detect("social dist") %>% any(),
+    physical = unlist(text) %>% str_detect("physical dist") %>% any()
+  ) %>%
+  ungroup() %>%
+  mutate(soc_phys = case_when(
+    social & !physical ~ "S",
+    !social & physical ~ "P",
+    social & physical  ~ "S+P"
+  ))
+```
+
+```{r soc-phys-plot}
+covid_speeches %>%
+  filter(!is.na(soc_phys)) %>%
+  ggplot(aes(x = date, y = soc_phys, color = soc_phys)) +
+  geom_point() +
+  guides(color = FALSE) +
+  labs(x = "Date", y = "Distancing type mentioned",
+       title = "Social (S) vs. physical (P) distancing",
+       subtitle = "Mentions over time")
+```
+
+
