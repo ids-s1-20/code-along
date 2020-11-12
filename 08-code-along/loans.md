@@ -63,7 +63,7 @@ rate_bank_fit
 
     ## parsnip model object
     ## 
-    ## Fit time:  4ms 
+    ## Fit time:  3ms 
     ## 
     ## Call:
     ## stats::lm(formula = interest_rate ~ bankruptcy, data = data)
@@ -95,7 +95,7 @@ rate_bank_fit$elapsed
 ```
 
     ##    user  system elapsed 
-    ##   0.003   0.000   0.003
+    ##   0.003   0.001   0.003
 
 ``` r
 tidy(rate_bank_fit)
