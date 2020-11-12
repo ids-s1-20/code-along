@@ -1,0 +1,117 @@
+---
+title: "Lending Club Loans"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(tidymodels)
+library(openintro)
+library(GGally)
+```
+
+## Prepare and peek at the data
+
+```{r data-prep}
+loans <- loans_full_schema %>%
+  mutate(
+    credit_util = total_credit_utilized / total_credit_limit,
+    bankruptcy  = as.factor(if_else(public_record_bankrupt == 0, 0, 1)),
+    verified_income = droplevels(verified_income)
+    ) %>%
+  rename(credit_checks = inquiries_last_12m) %>%
+  select(interest_rate, verified_income, debt_to_income, credit_util, 
+         bankruptcy, term, credit_checks, issue_month) 
+```
+
+```{r data-glimpse}
+glimpse(loans)
+```
+
+## Explore
+
+```{r explore-loans}
+
+```
+
+
+## Interest rate vs. bankruptcy
+
+```{r step-by-step}
+linear_reg() %>%                                # specify: what model will we fit?
+  set_engine("lm") %>%                          # set engine : how will we fit the model?
+  fit(interest_rate ~ bankruptcy, data = loans) # fit: actually fit model based on formula
+```
+
+```{r fit-rate_bank_fit}
+rate_bank_fit <- linear_reg() %>%
+  set_engine("lm") %>%
+  fit(interest_rate ~ bankruptcy, data = loans)
+```
+
+```{r look-in-rate_bank_fit}
+rate_bank_fit
+names(rate_bank_fit)
+rate_bank_fit$fit
+rate_bank_fit$elapsed
+```
+
+```{r tidy-rate_bank_fit}
+tidy(rate_bank_fit)
+```
+
+```{r glance-rate_bank_fit}
+glance(rate_bank_fit)
+```
+
+```{r augment-rate_bank_fit}
+augment(rate_bank_fit$fit)
+```
+
+## Interest rate vs. debt to income ratio
+
+```{r fit-rate_dti_fit}
+rate_dti_fit <- linear_reg() %>%
+  set_engine("lm") %>%
+  fit(interest_rate ~ debt_to_income, data = loans)
+```
+
+```{r tidy-rate_dti_fit}
+
+```
+
+```{r glance-rate_dti_fit}
+
+```
+
+```{r augment-rate_dti_fit}
+
+```
+
+```{r res-pred-plot-rate_dti_fit}
+
+```
+
+## Interest rate vs. everything
+
+```{r fit-rate_full_fit}
+
+```
+
+```{r tidy-rate_full_fit}
+
+```
+
+```{r glance-rate_full_fit}
+
+```
+
+```{r augment-rate_full_fit}
+
+```
+
+```{r res-pred-plot-rate_full_fit}
+
+```
