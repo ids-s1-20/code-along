@@ -1,0 +1,153 @@
+---
+title: "Modeling hotel bookings"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(tidymodels)
+library(skimr)
+library(GGally)
+knitr::opts_chunk$set(
+  fig.height = 6,
+  fig.asp = 0.618,
+  dpi = 300,
+  out.width = "90%"
+)
+```
+
+```{r load-data, message = FALSE}
+# From TidyTuesday: https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-02-11/readme.md
+hotels <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-02-11/hotels.csv")
+```
+
+## Prepare and peek at the data
+
+```{r create-little-ones}
+# create little ones
+hotels <- hotels %>%
+  mutate(
+    little_ones = children + babies,
+    has_little_ones = if_else(little_ones > 0, "yes", "no")
+    ) %>%
+  relocate(little_ones, has_little_ones)
+```
+
+```{r}
+# filter for non-cancelled
+hotel_stays <- hotels %>%
+  filter(is_canceled == 0)
+
+hotels %>%
+  count(is_canceled, reservation_status)
+
+hotel_stays %>%
+  count(is_canceled, reservation_status)
+```
+
+```{r select}
+hotel_stays <- hotel_stays %>%
+  select(has_little_ones, hotel, lead_time, arrival_date_month, 
+         stays_in_week_nights, adults, meal, required_car_parking_spaces,
+         assigned_room_type, market_segment, adr, total_of_special_requests)
+```
+
+
+```{r data-glimpse}
+glimpse(hotel_stays)
+```
+
+```{r data-skim}
+skim(hotel_stays)
+```
+
+## Explore
+
+```{r little_ones-parking}
+# little ones and parking
+```
+
+```{r little_ones-month-hotel}
+# little ones and month and hotel type
+```
+
+```{r pairwise}
+# ggally
+```
+
+## Build models
+
+```{r character-to-factors}
+hotels_df <- hotel_stays %>%
+  mutate(across(where(is.character), as.factor))
+```
+
+### Split into training and testing
+
+```{r split}
+set.seed(1234)
+hotels_split <- initial_split(hotels_df)
+
+hotels_train <- training(hotels_split)
+hotels_test <- testing(hotels_split)
+```
+
+### Build a recipe
+
+```{r build-recipe}
+hotels_rec <- recipe(has_little_ones ~ ., data = hotels_train) %>%
+  # create dummy variables for
+  step_dummy(all_nominal(), -all_outcomes()) %>%
+  # remove zero variance variables
+  step_zv(all_numeric())
+```
+
+### Train model
+
+```{r train}
+hotels_mod <- logistic_reg() %>%
+  set_engine("glm")
+
+hotels_wflow <- workflow() %>% 
+  add_model(hotels_mod) %>% 
+  add_recipe(hotels_rec)
+
+hotels_fit <- hotels_wflow %>% 
+  fit(data = hotels_train)
+```
+
+```{r view-fit}
+hotels_fit
+```
+
+
+### Make predictions
+
+```{r predict}
+hotels_pred <- predict(hotels_fit, hotels_test, type = "prob") %>% 
+  bind_cols(hotels_test) 
+```
+
+### Evaluate performance
+
+```{r roc-curve}
+hotels_pred %>%
+  roc_curve(
+    truth = has_little_ones,
+    .pred_yes,
+    event_level = "second"
+  ) %>%
+  autoplot()
+```
+
+```{r roc-auc}
+hotels_pred %>%
+  roc_auc(
+    truth = has_little_ones,
+    .pred_yes,
+    event_level = "second"
+  )
+```
+
