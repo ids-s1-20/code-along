@@ -1,0 +1,82 @@
+---
+title: "Course videos"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(readxl)
+library(tidytext)
+knitr::opts_chunk$set(
+  fig.height = 6,
+  fig.asp = 0.618,
+  dpi = 300,
+  out.width = "90%"
+)
+```
+
+```{r load-data, message = FALSE}
+videos <- read_excel("videos.xlsx")
+```
+
+## Video lengths
+
+```{r}
+videos %>%
+  count(week)
+```
+
+```{r}
+videos <- videos %>%
+  mutate(length = ((min * 60) + sec) / 60)
+
+videos %>%
+  group_by(week) %>%
+  summarise(
+    total = sum(length),
+    average = mean(length),
+    .groups = "drop"
+    ) %>%
+  pivot_longer(cols = -week, 
+               names_to = "measure_type", 
+               values_to = "length",
+               names_transform = list(measure_type = str_to_title)
+               ) %>%
+  mutate(week = as.factor(week)) %>%
+  ggplot(aes(x = week, y = length, fill = week)) +
+  geom_col() +
+  guides(fill = FALSE) +
+  facet_wrap(~measure_type, ncol = 1, scales = "free_y") +
+  labs(
+    title = "Lengths of pre-recorded videos in  IDS 2020",
+    x = "Week", 
+    y = "Length (in minutes)",
+    caption = "All videos can be found at introds.org"
+    )
+```
+
+## Video content
+
+```{r}
+videos %>%
+  mutate(unit = fct_inorder(unit)) %>%
+  unnest_tokens(word, title) %>%
+  anti_join(get_stopwords()) %>%
+  group_by(unit) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 1) %>%
+  slice_head(n = 5) %>%
+  ggplot(aes(y = word, x = n, fill = unit)) +
+  geom_col() +
+  guides(fill = FALSE) +
+  facet_wrap(~unit, ncol = 3, scales = "free") +
+  labs(
+    title = "Titles of pre-recorded videos in  IDS 2020",
+    y = NULL, 
+    x = NULL,
+    caption = "All videos can be found at introds.org"
+    )
+```
+
